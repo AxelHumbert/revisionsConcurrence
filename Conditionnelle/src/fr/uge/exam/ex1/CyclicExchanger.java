@@ -20,6 +20,9 @@ public class CyclicExchanger<T> {
   public T exchange(T value) throws InterruptedException {
     Objects.requireNonNull(value);
     synchronized (lock) {
+      if (nbAsk >= nbParticipants) {
+        throw new IllegalStateException();
+      }
       var index = 0;
       var idThread = Integer.parseInt(Thread.currentThread().getName());
       tab[idThread] = value;
@@ -36,12 +39,13 @@ public class CyclicExchanger<T> {
   }
 
   public static void main(String[] args) {
-    var nbParticipants = 3;
+    var nbParticipants = 5;
     var cyclicExchanger = new CyclicExchanger<Integer>(nbParticipants);
     for (var i = 0; i < nbParticipants; i++) {
       var tmp = i;
       Thread.ofPlatform().name(String.valueOf(tmp)).start(() -> {
         try {
+          Thread.sleep(tmp * 1000);
           System.out.println("Ich bin " + Thread.currentThread().getName() + " und Ich habe " + cyclicExchanger.exchange(tmp));
         } catch (InterruptedException e) {
           return;
